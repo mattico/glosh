@@ -1,0 +1,22 @@
+[package]
+authors = ["Andrey Cherkashin <with.out@me.com>"]
+name = "glosh"
+version = "0.1.0"
+
+[dependencies]
+aws-sdk-rust = "0.1.42"
+crowbar = "0.1"
+ftp = "2.2.1"
+json = "0.11.9"
+percent-encoding = "1.0.0"
+regex = "0.2.2"
+serde_json = "1.0.2"
+
+[dependencies.cpython]
+default-features = false
+features = ["python27-sys"]
+version = "0.1"
+
+[lib]
+crate-type = ["dylib"]
+name = "lambda"
