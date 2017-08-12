@@ -1,15 +1,15 @@
 use std::sync::Arc;
 use std::thread::{JoinHandle, spawn};
-use std::sync::mpsc::{SyncSender};
 use config::Config;
 use range::Range;
+use rb::{Producer, RbProducer};
 
 use aws_sdk_rust::aws::common::credentials::{ParametersProvider, DefaultCredentialsProvider};
 use aws_sdk_rust::aws::s3::endpoint::{Endpoint,Signature};
 use aws_sdk_rust::aws::s3::s3client::S3Client;
 use aws_sdk_rust::aws::s3::object::GetObjectRequest;
 
-pub fn spawn_downloader(config: Arc<Config>, data_tx: SyncSender<u8>, key: String) -> JoinHandle<()> {
+pub fn spawn_downloader(config: Arc<Config>, data_tx: Producer<u8>, key: String) -> JoinHandle<()> {
   let config = config.clone();
   spawn(move || {
     println!("Starting downloader");
@@ -35,12 +35,8 @@ pub fn spawn_downloader(config: Arc<Config>, data_tx: SyncSender<u8>, key: Strin
       let resp_result = client.get_object(&request, None);
       let resp = resp_result.expect("Failed to download chunk");
       println!("Downloaded chunk: {}", step.clone());
-      let mut body: Vec<u8> = resp.body.clone();
-      body.reverse();
       println!("Feeding bytes from chunk: {}", step.clone());
-      while let Some(byte) = body.pop() {
-        data_tx.send(byte).expect("failed to push bytes");
-      }
+      data_tx.write_blocking(&resp.body).expect("Got an empty response");
       if resp.body.len() < range.step {
         break;
       }
